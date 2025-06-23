@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Socket.IO Chat</title>
+  <title>Socket.IO Chat with Usernames</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -26,14 +26,28 @@
       width: 300px;
       padding: 5px;
     }
+
+    #username-form {
+      margin-bottom: 10px;
+    }
+
+    #username-input {
+      width: 200px;
+      padding: 5px;
+    }
   </style>
 </head>
 
 <body>
   <h1>Chat App</h1>
+  <!-- Username input form -->
+  <form id="username-form">
+    <input id="username-input" placeholder="Enter your username" autocomplete="off" />
+    <button type="submit">Set Username</button>
+  </form>
   <ul id="messages"></ul>
   <form id="form">
-    <input id="input" autocomplete="off" />
+    <input id="input" placeholder="Type a message" autocomplete="off" />
     <button>Send</button>
   </form>
 
@@ -43,24 +57,52 @@
     // Connect to the server
     const socket = io();
 
-    // Handle form submission
+    // DOM elements
+    const usernameForm = document.getElementById('username-form');
+    const usernameInput = document.getElementById('username-input');
     const form = document.getElementById('form');
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
 
+    // Handle username submission
+    usernameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (usernameInput.value) {
+        socket.emit('set username', usernameInput.value);
+        usernameInput.value = '';
+      }
+    });
+
+    // Handle chat message submission
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       if (input.value) {
-        // Emit a chat message to the server
         socket.emit('chat message', input.value);
         input.value = '';
       }
     });
 
-    // Listen for chat messages from the server
+    // Display chat messages
     socket.on('chat message', (msg) => {
       const li = document.createElement('li');
+      li.textContent = `${msg.user}: ${msg.text}`;
+      messages.appendChild(li);
+    });
+
+    // Display user join/leave notifications
+    socket.on('user joined', (msg) => {
+      const li = document.createElement('li');
       li.textContent = msg;
+      li.style.fontStyle = 'italic';
+      li.style.color = '#888';
+      messages.appendChild(li);
+    });
+
+    socket.on('user left', (msg) => {
+      const li = document.createElement('li');
+      li.textContent = msg;
+      li.style.fontStyle = 'italic';
+      li.style.color = '#888';
       messages.appendChild(li);
     });
   </script>
